@@ -9,7 +9,7 @@ import {
     FlagUint, FlagUints
 } from "./flag";
 import { compareString } from "./strings";
-export type CommandCallback<T = any> = (args: string[], cmd: ICommand) => T | Promise<T>
+export type CommandCallback<T = any> = (args: string[], userdata: any, cmd: ICommand) => T | Promise<T>
 export interface ICommand {
     /**
      * parent command

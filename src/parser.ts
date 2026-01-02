@@ -61,6 +61,10 @@ export interface ParseCommandOptions {
      *  @default false
      */
     allowUnknowCommand?: boolean
+    /**
+     * User-defined parameters passed to the callback
+     */
+    userdata?: any
 }
 /**
  * Used to manually invoke the found command.
@@ -102,6 +106,7 @@ export interface ParseCommandResult {
  */
 export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCommandOptions): Promise<ParseCommandResult> {
     const mode = opts?.mode
+    let userdata = opts?.userdata
     const allowUnknowCommand = opts?.allowUnknowCommand
     const allowUnknowFlag = opts?.allowUnknowFlag
 
@@ -258,7 +263,7 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
             for (const runner of runners!) {
                 const run = runner.cmd.run
                 if (run) {
-                    runner.result = await run(runner.args, runner.cmd)
+                    runner.result = await run(runner.args, userdata, runner.cmd)
                 }
             }
             return {
@@ -271,7 +276,7 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
     }
     const run = runner.cmd.run
     if (run) {
-        runner.result = await run(runner.args, runner.cmd)
+        runner.result = await run(runner.args, userdata, runner.cmd)
     }
     return {
         values: [

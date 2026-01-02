@@ -69,6 +69,10 @@ export class Command implements ICommand {
             throw new CommandError(
                 `Command name must be one of string | undefined | null`,
             )
+        } else if (name.startsWith('-')) {
+            throw new CommandError(
+                `Command names cannot be prefixed with -`,
+            )
         }
 
         this.name = name
@@ -100,11 +104,10 @@ export class Command implements ICommand {
      */
     add(...cmds: Array<Command | CommandOptions>) {
         if (cmds.length) {
-
             const children = this.children
             for (const opts of cmds) {
                 const cmd = opts instanceof Command ? opts : new Command(opts)
-                const parent = this.parent
+                const parent = cmd.parent
                 if (parent) {
                     throw new CommandError(
                         `command "${cmd.name}" already added to "${parent.use()}"`,

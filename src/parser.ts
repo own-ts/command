@@ -1,5 +1,5 @@
 import { FlagBoolean, type IFlag } from "./flag";
-import type { ICommand } from "./flags";
+import type { CommandCallback, ICommand } from "./flags";
 import { formatDateTime } from "./strings";
 export class ParseCommandError extends Error {
 
@@ -43,14 +43,25 @@ function getLogName(s: string): { name: string, value: string } {
         value: s.substring(i),
     }
 }
-export interface ParseCommandResult<T> {
+export interface ParseCommandResult {
     parsed?: boolean
-    value?: T | undefined | null
+    values?: any[]
     help?: boolean
 }
-export async function parseCommand<T>(args: string[], cmd: ICommand, opts?: ParseCommandOptions): Promise<ParseCommandResult<T>> {
-    const strs: string[] = []
-    let hasChildren = cmd.hasChildren()
+interface Runner {
+    cmd: ICommand
+    args: string[]
+    result?: any
+}
+export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCommandOptions): Promise<ParseCommandResult> {
+    cmd.flags.reset()
+    let strs: string[] = []
+    let runner: Runner = {
+        cmd: cmd,
+        args: strs,
+    }
+    const runners = [runner]
+
     let flag: IFlag<any, any> | undefined
     let flagName = ''
     const help = new FlagBoolean({ name: 'help', short: 'h' })
@@ -62,21 +73,6 @@ export async function parseCommand<T>(args: string[], cmd: ICommand, opts?: Pars
                 help: true,
             }
         }
-        if (hasChildren) {
-            const found = cmd.child(arg)
-            if (found) {
-                cmd = found
-                hasChildren = cmd.hasChildren()
-                continue
-            } else if (!opts?.allowUnknowCommand
-                && !arg.startsWith('-h')
-                && !arg.startsWith('--help=')
-                && arg !== '--help') {
-                throwCommand(cmd, arg)
-            }
-            hasChildren = false
-        }
-
         if (flag) {
             try {
                 await flag.parse(arg)
@@ -91,6 +87,7 @@ export async function parseCommand<T>(args: string[], cmd: ICommand, opts?: Pars
             }
             continue
         }
+
         if (arg === '-') {
             strs.push(arg)
             continue
@@ -175,6 +172,24 @@ export async function parseCommand<T>(args: string[], cmd: ICommand, opts?: Pars
                 throwFlag(cmd, `Unknow shorthand flag: ${JSON.stringify(name)} in ${arg}`)
             }
         }
+
+        if (!strs.length && cmd.hasChildren()) {
+            const found = cmd.child(arg)
+            if (found) {
+                strs = []
+                found.flags.reset()
+                runner = {
+                    cmd: found,
+                    args: strs,
+                }
+                runners.push(runner)
+
+                cmd = found
+                continue
+            } else if (!opts?.allowUnknowCommand) {
+                throwCommand(cmd, arg)
+            }
+        }
         strs.push(arg)
     }
     if (help.value) {
@@ -185,14 +200,14 @@ export async function parseCommand<T>(args: string[], cmd: ICommand, opts?: Pars
         }
     }
 
-    const run = cmd.run
-    if (run) {
-        return {
-            parsed: true,
-            value: await run(strs, cmd),
+    for (const runner of runners) {
+        const run = runner.cmd.run
+        if (run) {
+            runner.result = await run(runner.args, runner.cmd)
         }
     }
     return {
         parsed: true,
+        values: runners.map((v) => v.result)
     }
 }

@@ -72,7 +72,7 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
             let name = arg.substring(1, 2)
             flag = cmd.flags.find(name, true)
             if (flag) {
-                let s = arg.substring(3)
+                let s = arg.substring(2)
                 while (true) {
                     if (s === '') {
                         if (flag.isBool()) {

@@ -116,6 +116,7 @@ export class Command implements ICommand {
                 children.set(key, cmd)
             }
         }
+        return this
     }
     /**
      * Return command string

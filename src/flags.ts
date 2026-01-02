@@ -54,6 +54,8 @@ export interface ICommand {
      * Returns whether a subcommand exists.
      */
     hasChildren(): boolean
+
+    toString(err?: boolean): string
 }
 /**
  * Flags definition and parse

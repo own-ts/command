@@ -6,7 +6,7 @@ export interface IFlag<T, TV = T> {
      */
     readonly name: string
     /**
-     * Short name `-${short}`
+     * Shorthand name `-${short}`
      */
     readonly short: string
     /**
@@ -62,7 +62,7 @@ export interface FlagOptions<T, TV = T> {
      */
     name: string
     /**
-     * Optional flag short name
+     * Optional flag shorthand name
      */
     short?: string | undefined | null
     /**
@@ -136,8 +136,10 @@ export class Flag<T, TV = T> implements IFlag<T, TV> {
         switch (short) {
             case '=':
             case '-':
+            case "'":
+            case '"':
                 throw new CommandError(
-                    `Flag short cannot be '=' or '-'`,
+                    `Flag short cannot be in [=-'"]`,
                 )
         }
         this.short = short

@@ -1,4 +1,5 @@
 import { CommandError } from "./errors";
+import { FlagBoolean } from "./flag";
 import { Flags, type CommandCallback, type ICommand } from "./flags";
 import { compareString, formatUsage } from "./strings";
 
@@ -69,6 +70,7 @@ export class Command implements ICommand {
                 `Command name must be one of string | undefined | null`,
             )
         }
+
         this.name = name
 
         const usage = opts.usage ?? ''
@@ -96,24 +98,25 @@ export class Command implements ICommand {
      * Add subcommands to commands
      * @param cmds
      */
-    add(...cmds: Array<Command>) {
-        if (cmds.length == 0) {
-            return
-        }
-        const children = this.children
-        for (const cmd of cmds) {
-            const parent = this.parent
-            if (parent) {
-                throw new CommandError(
-                    `command "${cmd.name}" already added to "${parent.use()}"`,
-                )
-            }
-            const key = cmd.name
-            if (children.has(key)) {
-                throw new CommandError(`command "${this.use()}" already has command ${key}`)
-            } else {
-                cmd.parent = this
-                children.set(key, cmd)
+    add(...cmds: Array<Command | CommandOptions>) {
+        if (cmds.length) {
+
+            const children = this.children
+            for (const opts of cmds) {
+                const cmd = opts instanceof Command ? opts : new Command(opts)
+                const parent = this.parent
+                if (parent) {
+                    throw new CommandError(
+                        `command "${cmd.name}" already added to "${parent.use()}"`,
+                    )
+                }
+                const key = cmd.name
+                if (children.has(key)) {
+                    throw new CommandError(`command "${this.use()}" already has command ${key}`)
+                } else {
+                    cmd.parent = this
+                    children.set(key, cmd)
+                }
             }
         }
         return this
@@ -132,10 +135,10 @@ export class Command implements ICommand {
     /**
      * Get the description string of command usage
      */
-    toString(): string {
+    toString(err?: boolean): string {
         const minpad = 8
         const use = this.use()
-        const strs = [this.usageLong === '' ? this.usageLong : this.usage]
+        const strs = err ? [] : [this.usageLong === '' ? this.usageLong : this.usage]
         if (strs.length == 0) {
             strs.push("Usage:")
         } else {
@@ -206,7 +209,7 @@ Available Commands:`);
                 )
             }
         }
-        if (children) {
+        if (children.size) {
             strs.push(
                 `\nUse "${use} [command] --help" for more information about a command.`,
             )

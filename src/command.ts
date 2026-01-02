@@ -107,7 +107,7 @@ export class Command implements ICommand {
             const children = this.children
             for (const opts of cmds) {
                 const cmd = opts instanceof Command ? opts : new Command(opts)
-                const parent = this.parent
+                const parent = cmd.parent
                 if (parent) {
                     throw new CommandError(
                         `command "${cmd.name}" already added to "${parent.use()}"`,

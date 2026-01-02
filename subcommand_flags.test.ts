@@ -1,6 +1,6 @@
 
 import { expect, test, describe } from "bun:test";
-import { Command, parseCommand } from "./index";
+import { Command, parseCommand, RunMode } from "./index";
 
 describe("Subcommand Flag Overriding and Isolation", () => {
 
@@ -33,12 +33,12 @@ describe("Subcommand Flag Overriding and Isolation", () => {
         });
 
         // 情況 A: 都有輸入
-        await parseCommand(["--config", "parent.yaml", "child", "--config", "99"], root);
+        await parseCommand(["--config", "parent.yaml", "child", "--config", "99"], root, { mode: RunMode.all });
         expect(rootVal).toBe("parent.yaml");
         expect(childVal).toBe(99);
 
         // 情況 B: 子命令未輸入 Flag (驗證 null 隔離)
-        await parseCommand(["--config", "new.yaml", "child"], root);
+        await parseCommand(["--config", "new.yaml", "child"], root, { mode: RunMode.all });
         expect(rootVal).toBe("new.yaml");
         expect(childVal).toBeNull(); // 這裡驗證了它正確返回 null 而非繼承父命令的值
     });
@@ -64,7 +64,7 @@ describe("Subcommand Flag Overriding and Isolation", () => {
         });
 
         // 當都不輸入 --port 時
-        await parseCommand(["server"], root);
+        await parseCommand(["server"], root, { mode: RunMode.all });
 
         expect(rootPort).toBeNull();    // 父命令沒有預設值，應為 null
         expect(childPort).toBe(8080);   // 子命令有預設值，應為 8080
@@ -87,11 +87,11 @@ describe("Subcommand Flag Overriding and Isolation", () => {
         level1.add(level2);
 
         // 執行但不傳 flag
-        await parseCommand(["level1", "level2"], root);
+        await parseCommand(["level1", "level2"], root, { mode: RunMode.all });
         expect(leafValue).toBeNull();
 
         // 執行並傳 flag
-        await parseCommand(["level1", "level2", "--flag", "hello"], root);
+        await parseCommand(["level1", "level2", "--flag", "hello"], root, { mode: RunMode.all });
         expect(leafValue).toBe("hello");
     });
 
@@ -115,10 +115,10 @@ describe("Subcommand Flag Overriding and Isolation", () => {
         });
 
         // 正常執行
-        await parseCommand(["run", "--local"], root);
+        await parseCommand(["run", "--local"], root, { mode: RunMode.all });
 
         // 異常執行：子命令嘗試使用父命令的 flag (不具備繼承性)
         // 在你的架構中，如果 run 沒有定義 global，這應該報錯
-        expect(parseCommand(["run", "--global"], root)).rejects.toThrow();
+        expect(parseCommand(["run", "--global"], root, { mode: RunMode.all })).rejects.toThrow();
     });
 });

@@ -17,19 +17,6 @@ Run ${JSON.stringify(cmd.use() + ' --help')} for usage.
 [${formatDateTime(new Date())}] ${message}`, options)
 }
 
-export interface ParseCommandOptions {
-    /**
-     * Whether to allow undefined flags
-     * @default false
-     */
-    allowUnknowFlag?: boolean
-
-    /**
-     * Whether to allow undefined subcommands
-     *  @default false
-     */
-    allowUnknowCommand?: boolean
-}
 function getLogName(s: string): { name: string, value: string } {
     const i = s.indexOf('=')
     if (i < 0) {
@@ -43,24 +30,88 @@ function getLogName(s: string): { name: string, value: string } {
         value: s.substring(i),
     }
 }
-export interface ParseCommandResult {
-    parsed?: boolean
-    values?: any[]
-    help?: boolean
+export enum RunMode {
+    /**
+     * Call each found command callback sequentially.
+     */
+    all,
+    /**
+     * Only call the callback defined by the last matching subcommand.
+     */
+    last,
+    /**
+     * Do not execute the callback; return the callback context of the matched command.
+     */
+    runner,
 }
-interface Runner {
+export interface ParseCommandOptions {
+    /**
+     * @default RunMode.last
+     */
+    mode?: RunMode
+
+    /**
+     * Whether to allow undefined flags
+     * @default false
+     */
+    allowUnknowFlag?: boolean
+
+    /**
+     * Whether to allow undefined subcommands
+     *  @default false
+     */
+    allowUnknowCommand?: boolean
+}
+/**
+ * Used to manually invoke the found command.
+ */
+export interface Runner {
+    /**
+     * Matched commands
+     */
     cmd: ICommand
+    /**
+     * The arguments that should be passed to it
+     */
     args: string[]
+    /**
+     * You can use it to store cmd.run callback result
+     */
     result?: any
 }
+export interface ParseCommandResult {
+    /**
+     * If this value is returned after parsing help, it will be set to true
+     */
+    help?: boolean
+    /**
+     * Store callback results during automatic callback
+     */
+    values?: any[]
+    /**
+     * When manually calling a callback, the calling context is stored, which you can iterate through to perform sequential or parallel callbacks
+     */
+    runners?: Runner[]
+}
+/**
+ * Parse the command line and invoke the command callback.
+ * @param args Command line arguments. It should not include startup commands such as bun/deno run.
+ * @param cmd Root command
+ * @param opts Optional parsing details definition
+ * @returns 
+ */
 export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCommandOptions): Promise<ParseCommandResult> {
+    const mode = opts?.mode
+    const allowUnknowCommand = opts?.allowUnknowCommand
+    const allowUnknowFlag = opts?.allowUnknowFlag
+
     cmd.flags.reset()
     let strs: string[] = []
     let runner: Runner = {
         cmd: cmd,
         args: strs,
     }
-    const runners = [runner]
+    const runners = mode === RunMode.all || mode === RunMode.runner ? [runner] : undefined
 
     let flag: IFlag<any, any> | undefined
     let flagName = ''
@@ -69,7 +120,6 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
         if (help.value) {
             console.log(cmd.toString())
             return {
-                parsed: true,
                 help: true,
             }
         }
@@ -116,7 +166,7 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                     )
                 }
                 continue
-            } else if (!opts?.allowUnknowFlag) {
+            } else if (!allowUnknowFlag) {
                 throwFlag(cmd, `Unknow flag: ${JSON.stringify(name)} in ${arg}`)
             }
         } else if (arg.startsWith('-')) {
@@ -158,7 +208,6 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                         break
                     }
 
-
                     name = s.substring(0, 1)
                     flagName = JSON.stringify('-' + name)
                     flag = cmd.flags.find(name, true) ?? (name === 'h' ? help : undefined)
@@ -168,7 +217,7 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                     s = s.substring(1)
                 }
                 continue
-            } else if (!opts?.allowUnknowFlag) {
+            } else if (!allowUnknowFlag) {
                 throwFlag(cmd, `Unknow shorthand flag: ${JSON.stringify(name)} in ${arg}`)
             }
         }
@@ -182,11 +231,12 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                     cmd: found,
                     args: strs,
                 }
-                runners.push(runner)
-
+                if (runners) {
+                    runners.push(runner)
+                }
                 cmd = found
                 continue
-            } else if (!opts?.allowUnknowCommand) {
+            } else if (!allowUnknowCommand) {
                 throwCommand(cmd, arg)
             }
         }
@@ -195,19 +245,37 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
     if (help.value) {
         console.log(cmd.toString())
         return {
-            parsed: true,
             help: true,
         }
     }
-
-    for (const runner of runners) {
-        const run = runner.cmd.run
-        if (run) {
-            runner.result = await run(runner.args, runner.cmd)
-        }
+    if (flag) {
+        throwFlag(cmd,
+            `flag needs an argument: ${flagName} in ${args[args.length - 1]}`
+        )
+    }
+    switch (mode) {
+        case RunMode.all:
+            for (const runner of runners!) {
+                const run = runner.cmd.run
+                if (run) {
+                    runner.result = await run(runner.args, runner.cmd)
+                }
+            }
+            return {
+                values: runners!.map((v) => v.result)
+            }
+        case RunMode.runner:
+            return {
+                runners: runners,
+            }
+    }
+    const run = runner.cmd.run
+    if (run) {
+        runner.result = await run(runner.args, runner.cmd)
     }
     return {
-        parsed: true,
-        values: runners.map((v) => v.result)
+        values: [
+            runner.result
+        ]
     }
 }

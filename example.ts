@@ -1,107 +1,69 @@
-import { Command, parseCommand, ParseCommandError, type ICommand } from './index'
+import { Command, parseCommand, ParseCommandError } from "./index";
 
-async function main(root: Command) {
+async function main() {
+    const root = new Command({
+        name: "my-app",
+        usage: "A type-safe CLI example",
+        prepare(flags) {
+            // Define flags
+            const port = flags.uint({
+                name: "port",
+                short: "p",
+                default: 8080,
+                usage: "port to listen on",
+            });
+
+            const debug = flags.bool({
+                name: "debug",
+                short: "d",
+                usage: "enable verbose logging",
+            });
+
+            // Return the handler directly
+            // 'port.value' is inferred as 'number'
+            // 'debug.value' is inferred as 'boolean'
+            return async (args) => {
+                if (debug.value) {
+                    console.log(
+                        `Starting server in debug mode on port ${port.value}...`,
+                    );
+                } else {
+                    console.log(`Starting server on port ${port.value}...`);
+                }
+                console.log("Extra arguments:", args);
+            };
+        },
+    });
+
+    // Add a Subcommand
+    root.add({
+        name: "greet",
+        usage: "greet a user",
+        prepare(flags) {
+            const name = flags.string({
+                name: "name",
+                short: "n",
+                default: "Guest",
+                usage: "user to greet",
+            });
+
+            return (args) => {
+                console.log(`Hello, ${name.value}!`);
+            };
+        },
+    });
+
+    // Parse and Execute
     try {
-        await parseCommand(Bun.argv.slice(2), root)
+        await parseCommand(Bun.argv.slice(2), root);
     } catch (e) {
         if (e instanceof ParseCommandError) {
-            console.log(`${e}`)
+            // Automatically handles usage printing on errors
+            console.log(`${e}`);
         } else {
-            console.log(e)
+            console.error("Runtime Error:", e);
         }
     }
 }
-function handler(args: string[], cmd: ICommand) {
-    console.log(cmd.name)
-    console.log(' - args:', args)
-    for (const item of cmd.flags) {
-        console.log(` - ${item.name}:`, item.value)
-    }
-}
-main(new Command({
-    name: 'main.ts',
-    usage: 'exampe flags',
-    prepare(flags) {
-        flags.int({
-            name: 'int',
-            short: 'i',
-            usage: 'example flag int',
-        })
-        flags.ints({
-            name: 'ints',
-            short: 'I',
-            usage: 'example flag int[]',
-        })
-        flags.uint({
-            name: 'uint',
-            short: 'u',
-            usage: 'example flag uint',
-            default: 80,
-        })
-        flags.uints({
-            name: 'uints',
-            short: 'U',
-            usage: 'example flag sint[]',
-            default: [80, 2052]
-        })
-        flags.string({
-            name: 'string',
-            short: 's',
-            usage: 'example flag string',
-        })
-        flags.strings({
-            name: 'strings',
-            short: 'S',
-            usage: 'example flag string[]',
-        })
-        flags.bool({
-            name: 'bool',
-            short: 'b',
-            usage: 'example flag bool',
-        })
-        flags.bools({
-            name: 'bools',
-            short: 'B',
-            usage: 'example flag bool[]',
-        })
-        return handler
-    },
-}).add(
-    {
-        name: 'child',
-        usage: 'subcommand example',
-        prepare(flags) {
-            flags.number({
-                name: 'number',
-                short: 'n',
-                usage: 'example flag number',
-            })
-            flags.numbers({
-                name: 'numbers',
-                short: 'N',
-                usage: 'example flag number[]',
-            })
-            flags.bigint({
-                name: 'int',
-                short: 'i',
-                usage: 'example flag bigint',
-            })
-            flags.bigints({
-                name: 'ints',
-                short: 'I',
-                usage: 'example flag bigint[]',
-            })
-            flags.bool({
-                name: 'bool',
-                short: 'b',
-                usage: 'example flag bool',
-            })
-            flags.bools({
-                name: 'bools',
-                short: 'B',
-                usage: 'example flag bool[]',
-            })
-            return handler
-        }
-    },
-))
+
+main();

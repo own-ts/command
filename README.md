@@ -1,4 +1,4 @@
-# @own-ts/command
+# @own-js/command
 
 A lightweight, high-performance, and strictly typed command-line framework for
 TypeScript. Heavily inspired by Go's **Cobra**, but redesigned to leverage the
@@ -27,10 +27,13 @@ full power of the TypeScript ecosystem.
 
 ```bash
 # Using Bun
-bun add @own-ts/command
+bun add @own-js/command
 
 # Using NPM
-npm install @own-ts/command
+npm install @own-js/command
+
+# Using Deno
+deno add npm:@own-js/command
 ```
 
 ---
@@ -41,7 +44,7 @@ By defining the handler inside `prepare`, you can use the flag objects directly.
 TypeScript automatically infers the correct type for `.value`.
 
 ```typescript
-import { Command, parseCommand, ParseCommandError } from "@own-ts/command";
+import { Command, parseCommand, ParseCommandError } from "@own-js/command";
 
 const root = new Command({
     name: "my-app",
@@ -91,7 +94,7 @@ command handles global setup (like authentication), and the child command
 performs the specific task. All handlers in the path are executed sequentially.
 
 ```typescript
-import { Command, parseCommand, RunMode } from "@own-ts/command";
+import { Command, parseCommand, RunMode } from "@own-js/command";
 
 // 1. Parent command handles global context (e.g., Auth)
 const root = new Command({

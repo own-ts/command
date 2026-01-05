@@ -141,7 +141,7 @@ export class Command implements ICommand {
     toString(err?: boolean): string {
         const minpad = 8
         const use = this.use()
-        const strs = err ? [] : [this.usageLong === '' ? this.usageLong : this.usage]
+        const strs = err ? [] : [this.usageLong === '' ? this.usage : this.usageLong]
         if (strs.length == 0) {
             strs.push("Usage:")
         } else {

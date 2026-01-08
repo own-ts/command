@@ -1,6 +1,6 @@
 {
   "name": "@own-js/command",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A lightweight, high-performance, and strictly typed command-line framework.",
   "files": [
     "dist"
@@ -26,5 +26,30 @@
   "scripts": {
     "build": "tsup ./index.ts --format esm,cjs --dts --clean --minify",
     "push": "bun publish  --access public"
-  }
+  },
+  "keywords": [
+    "command",
+    "parser",
+    "typescript",
+    "command-line",
+    "subcommands",
+    "cli-framework",
+    "type-safe",
+    "cobra",
+    "command-line-interface",
+    "bun",
+    "deno",
+    "nodejs",
+    "zero-dependencies",
+    "runtime-agnostic"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/own-js-org/command"
+  },
+  "bugs": {
+    "url": "https://github.com/own-js-org/command/issues"
+  },
+  "homepage": "https://github.com/own-js-org/command#readme",
+  "license": "MIT"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@own-js/command",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A lightweight, high-performance, and strictly typed command-line framework.",
   "files": [
     "dist"
@@ -25,7 +25,7 @@
   },
   "scripts": {
     "build": "tsup ./index.ts --format esm,cjs --dts --clean --minify",
-    "push": "bun publish  --access public"
+    "push": "tsup ./index.ts --format esm,cjs --dts --clean --minify && bun publish  --access public"
   },
   "keywords": [
     "command",

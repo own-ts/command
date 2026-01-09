@@ -1,4 +1,5 @@
 import { Command, parseCommand, ParseCommandError, type ICommand } from './index'
+import { createCompletion } from './src/completion'
 
 
 async function main(root: Command) {
@@ -49,7 +50,7 @@ main(new Command({
             name: 'string',
             short: 's',
             usage: 'example flag string',
-            values: ['abc', 'def'],
+            values: ['abc 123\"', 'def'],
         })
         flags.strings({
             name: 'strings',
@@ -83,6 +84,7 @@ main(new Command({
                 name: 'numbers',
                 short: 'N',
                 usage: 'example flag number[]',
+                values: [80, 443, 2052, 2053]
             })
             flags.bigint({
                 name: 'int',
@@ -107,4 +109,5 @@ main(new Command({
             return handler
         }
     },
+    createCompletion(),
 ))

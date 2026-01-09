@@ -1,3 +1,4 @@
+import { getRuntime, type Runtime } from "./env";
 import { CommandError } from "./errors";
 import { FlagBoolean } from "./flag";
 import { Flags, type CommandCallback, type ICommand } from "./flags";
@@ -7,6 +8,7 @@ import { compareString, formatUsage, getLevenshteinDistance } from "./strings";
  * Command definition options
  */
 export interface CommandOptions {
+    runtime?: Runtime
     /**
      * Command name
      */
@@ -24,7 +26,7 @@ export interface CommandOptions {
      * @remarks
      * Here you can write detailed usage instructions including some usage examples
      */
-    usageLong?: string
+    usageLong?: string | ((cmd: ICommand) => string)
 
     /**
      * Called when the user specifies to execute this command/subcommand
@@ -49,14 +51,27 @@ export class Command implements ICommand {
     parent?: ICommand | undefined | null
     readonly name: string
     readonly usage: string
-    readonly usageLong: string
+    private readonly usageLong_: string | ((cmd: ICommand) => string)
+    get usageLong() {
+        const f = this.usageLong_
+        if (typeof f === "function") {
+            const s = f(this)
+            return s
+        }
+        return f
+    }
     readonly flags: Flags
     readonly run: CommandCallback | null | undefined
     /**
      * subcommand
      */
-    readonly children = new Map<string, Command>()
-
+    readonly children = new Map<string, ICommand>()
+    /**
+     * return subcommand
+     */
+    values(): MapIterator<ICommand> {
+        return this.children.values()
+    }
     child(name: string): ICommand | null {
         return this.children.get(name) ?? null
     }
@@ -78,7 +93,9 @@ export class Command implements ICommand {
     hasChildren(): boolean {
         return this.children.size ? true : false
     }
+    readonly runtime?: Runtime
     constructor(opts: CommandOptions) {
+        this.runtime = opts.runtime
         const name = opts.name
         if (typeof name !== 'string') {
             throw new CommandError(
@@ -101,12 +118,12 @@ export class Command implements ICommand {
         this.usage = formatUsage(usage)
 
         const usageLong = opts.usageLong ?? ''
-        if (typeof usageLong !== 'string') {
+        if (typeof usageLong !== 'string' && typeof usageLong !== 'function') {
             throw new CommandError(
-                `Command long must be one of string | undefined | null`,
+                `Command long must be one of string | undefined | null | (()=>string)`,
             )
         }
-        this.usageLong = usageLong === '' ? this.usage : usageLong
+        this.usageLong_ = usageLong === '' ? this.usage : usageLong
 
         const flags = new Flags(this)
 
@@ -142,13 +159,25 @@ export class Command implements ICommand {
     /**
      * Return command string
      */
-    use(): string {
+    use(runtime?: Runtime): string {
         const strs = [this.name]
         for (let parent = this.parent; parent; parent = parent.parent) {
             strs.push()
             strs.push(parent.name)
         }
-        return strs.reverse().join(' ')
+        const vals = strs.reverse()
+        switch (runtime ?? this.runtime ?? getRuntime()) {
+            case 'deno':
+                vals[0] = `deno run -A ${vals[0]}`
+                break
+            case 'bun':
+                vals[0] = `bun run ${vals[0]}`
+                break
+            case 'node':
+                vals[0] = `node ${vals[0]}`
+                break
+        }
+        return vals.join(' ')
     }
     /**
      * Get the description string of command usage
@@ -168,7 +197,7 @@ export class Command implements ICommand {
             strs.push(`  ${use} [command]
 
 Available Commands:`);
-            const arrs = new Array<Command>()
+            const arrs: ICommand[] = []
             let pad = 0;
             for (const v of children.values()) {
                 const len = v.name.length

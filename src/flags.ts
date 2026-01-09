@@ -29,7 +29,7 @@ export interface ICommand {
     /**
      * Describe the detailed usage of this command
      */
-    readonly usageLong: string
+    readonly usageLong: string | (() => string)
 
     /**
      * command flags
@@ -47,7 +47,7 @@ export interface ICommand {
     run: CommandCallback | null | undefined
 
     /**
-     * found child command
+     * found subcommand
      */
     child(name: string): ICommand | null
     /**
@@ -61,6 +61,11 @@ export interface ICommand {
     guess(name: string, levenshteinDistance?: number | null): ICommand | null
 
     toString(err?: boolean): string
+
+    /**
+     * return subcommand
+     */
+    values(): MapIterator<ICommand>
 }
 /**
  * Flags definition and parse
@@ -138,12 +143,10 @@ export class Flags implements Iterable<Flag<any>> {
             },
         };
     }
-    /**
-     * @internal
-     */
     [Symbol.iterator](): Iterator<Flag<any>> {
         return this.iterator()
     }
+
     /**
      * @internal
      */

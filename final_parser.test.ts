@@ -84,10 +84,10 @@ describe("Final Parser Logic Validation", () => {
         expect(parseCommand(["--unknown"], root)).rejects.toBeInstanceOf(ParseCommandError);
     });
 
-    test("should allow unknown flags when opts.allowUnknowFlag is true", async () => {
+    test("should allow unknown flags when opts.allowUnknownFlag is true", async () => {
         const root = new Command({ name: "app", prepare: () => () => { } });
 
-        const result = await parseCommand(["--unknown"], root, { allowUnknowFlag: true });
+        const result = await parseCommand(["--unknown"], root, { allowUnknownFlag: true });
         expect(result.values ? true : false).toBe(true);
     });
 });

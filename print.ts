@@ -27,6 +27,7 @@ main(new Command({
             name: 'int',
             short: 'i',
             usage: 'example flag int',
+            values: [1, 2, 3],
         })
         flags.ints({
             name: 'ints',

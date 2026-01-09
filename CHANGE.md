@@ -1,6 +1,8 @@
 # 1.0.4
 
 - Add smart hints for mismatched subcommands/flag
+- I've fixed some spelling errors in English words. Sorry, English is not my
+  native language. Thanks Gemini.
 
 # 1.0.3
 

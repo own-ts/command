@@ -76,13 +76,13 @@ export interface ParseCommandOptions {
      * Whether to allow undefined flags
      * @default false
      */
-    allowUnknowFlag?: boolean
+    allowUnknownFlag?: boolean
 
     /**
      * Whether to allow undefined subcommands
      *  @default false
      */
-    allowUnknowCommand?: boolean
+    allowUnknownCommand?: boolean
     /**
      * User-defined parameters passed to the callback
      */
@@ -135,8 +135,8 @@ export interface ParseCommandResult {
 export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCommandOptions): Promise<ParseCommandResult> {
     const mode = opts?.mode
     let userdata = opts?.userdata
-    const allowUnknowCommand = opts?.allowUnknowCommand
-    const allowUnknowFlag = opts?.allowUnknowFlag
+    const allowUnknownCommand = opts?.allowUnknownCommand
+    const allowUnknownFlag = opts?.allowUnknownFlag
 
     cmd.flags.reset()
     let strs: string[] = []
@@ -201,7 +201,7 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                     )
                 }
                 continue
-            } else if (!allowUnknowFlag) {
+            } else if (!allowUnknownFlag) {
                 const falg = cmd.flags.guess(name, opts?.levenshteinDistance)
                 throwFlag(cmd, `Unknow flag: ${JSON.stringify(name)} in ${arg}`, falg?.name)
             }
@@ -249,13 +249,13 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                     flagName = JSON.stringify('-' + name)
                     flag = cmd.flags.find(name, true) ?? (name === 'h' ? help : undefined)
                     if (!flag) {
-                        throwFlag(cmd, `Unknow shorthand flag: ${JSON.stringify(name)} in ${arg}`)
+                        throwFlag(cmd, `Unknown shorthand flag: ${JSON.stringify(name)} in ${arg}`)
                     }
                     s = s.substring(1)
                 }
                 continue
-            } else if (!allowUnknowFlag) {
-                throwFlag(cmd, `Unknow shorthand flag: ${JSON.stringify(name)} in ${arg}`)
+            } else if (!allowUnknownFlag) {
+                throwFlag(cmd, `Unknown shorthand flag: ${JSON.stringify(name)} in ${arg}`)
             }
         }
 
@@ -273,7 +273,7 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                 }
                 cmd = found
                 continue
-            } else if (!allowUnknowCommand) {
+            } else if (!allowUnknownCommand) {
                 throwCommand(cmd, arg, cmd.guess(arg, opts?.levenshteinDistance)?.name)
             }
         }

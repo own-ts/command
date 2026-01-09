@@ -27,7 +27,6 @@ main(new Command({
             name: 'int',
             short: 'i',
             usage: 'example flag int',
-            values: [1, 2, 3],
         })
         flags.ints({
             name: 'ints',
@@ -43,18 +42,20 @@ main(new Command({
         flags.uints({
             name: 'uints',
             short: 'U',
-            usage: 'example flag sint[]',
+            usage: 'example flag uint[]',
             default: [80, 2052]
         })
         flags.string({
             name: 'string',
             short: 's',
             usage: 'example flag string',
+            values: ['abc', 'def'],
         })
         flags.strings({
             name: 'strings',
             short: 'S',
             usage: 'example flag string[]',
+            values: ['abc', 'def']
         })
         flags.bool({
             name: 'bool',

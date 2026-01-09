@@ -1,6 +1,6 @@
 # 1.0.4
 
-- Add smart hints for mismatched subcommands/flag
+- Automatically suggests the correct flag or command when a typo occurs
 - I've fixed some spelling errors in English words. Sorry, English is not my
   native language. Thanks Gemini.
 

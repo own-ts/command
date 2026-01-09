@@ -1,5 +1,5 @@
 import { CommandError } from './errors'
-import { formatUsage, parseBool } from './strings'
+import { formatUsage, getLevenshteinDistance, parseBool } from './strings'
 export interface IFlag<T, TV = T> {
     /**
      * Flag name: `--${name}`
@@ -55,6 +55,11 @@ export interface IFlag<T, TV = T> {
      * Returns whether it is a bool flag
      */
     isBool(): boolean
+
+    /**
+     * Guessing what the user actually wants to input
+     */
+    guess(v: string, levenshteinDistance?: number | null): string | null
 }
 export interface FlagOptions<T, TV = T> {
     /**
@@ -222,9 +227,30 @@ export class Flag<T, TV = T> implements IFlag<T, TV> {
     isBool(): boolean {
         return false
     }
+    guess(input: string, levenshteinDistance?: number | null): string | null {
+        return null
+    }
 }
 
-
+function guessString(input: string, values?: string[] | null, levenshteinDistance?: number | null): string | null {
+    if (values) {
+        let found = Number.isFinite(levenshteinDistance) ? levenshteinDistance! : 2
+        if (found > 0) {
+            let v: string | null = null
+            let i
+            for (const val of values) {
+                const s = `${val}`
+                i = getLevenshteinDistance(input, s)
+                if (i <= found) {
+                    found = i
+                    v = s
+                }
+            }
+            return v
+        }
+    }
+    return null
+}
 /**
  * A flag of type string
  */
@@ -235,6 +261,9 @@ export class FlagString extends Flag<string> {
     override async parse(s: string) {
         await this.verify(s)
         this.value_ = s
+    }
+    override guess(input: string, levenshteinDistance?: number | null): string | null {
+        return guessString(input, this.values, levenshteinDistance)
     }
 }
 /**
@@ -250,6 +279,9 @@ export class FlagStrings extends Flag<string[], string> {
             this.value_ = []
         }
         this.value_.push(s)
+    }
+    override guess(input: string, levenshteinDistance?: number | null): string | null {
+        return guessString(input, this.values, levenshteinDistance)
     }
 }
 /**

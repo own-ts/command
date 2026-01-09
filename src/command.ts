@@ -63,12 +63,14 @@ export class Command implements ICommand {
     guess(name: string, levenshteinDistance?: number | null): ICommand | null {
         let found = Number.isFinite(levenshteinDistance) ? levenshteinDistance! : 2
         let v: ICommand | null = null
-        let i
-        for (const [key, val] of this.children) {
-            i = getLevenshteinDistance(name, key)
-            if (i <= found) {
-                found = i
-                v = val
+        if (found > 0) {
+            let i
+            for (const [key, val] of this.children) {
+                i = getLevenshteinDistance(name, key)
+                if (i <= found) {
+                    found = i
+                    v = val
+                }
             }
         }
         return v

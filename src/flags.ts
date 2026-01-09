@@ -96,12 +96,14 @@ export class Flags implements Iterable<Flag<any>> {
         }
         let found = Number.isFinite(levenshteinDistance) ? levenshteinDistance! : 2
         let v: Flag<any, any> | null = null
-        let i
-        for (const [key, flag] of this.long_) {
-            i = getLevenshteinDistance(name, key)
-            if (i <= found) {
-                found = i
-                v = flag
+        if (found > 0) {
+            let i
+            for (const [key, flag] of this.long_) {
+                i = getLevenshteinDistance(name, key)
+                if (i <= found) {
+                    found = i
+                    v = flag
+                }
             }
         }
         return v

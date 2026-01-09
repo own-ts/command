@@ -20,6 +20,8 @@ full power of the TypeScript ecosystem.
   `verify: (v) => void | Promise<void>` for pre-execution validation.
 - **Automatic Help**: Every command and subcommand automatically inherits `-h`
   and `--help` flags.
+- **Smart Suggestions**: Automatically suggests the correct flag or command when
+  a typo occurs (e.g., --nnmber $\rightarrow$ --number).
 
 ---
 

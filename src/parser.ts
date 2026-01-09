@@ -21,6 +21,23 @@ ${cmd.toString(true)}
 [${formatDateTime(new Date())}] ${message}`, options)
     }
 }
+function throwArgument(cmd: ICommand, message: string, flagName: string, mean?: string | null, options?: ErrorOptions): never {
+    if (mean) {
+        throw new ParseCommandError(`${message}
+${cmd.toString(true)}
+
+[${formatDateTime(new Date())}] ${message}
+
+Did you mean this?
+  ${flagName.substring(1, flagName.length - 1)} ${JSON.stringify(mean)}
+`, options)
+    } else {
+        throw new ParseCommandError(`${message}
+${cmd.toString(true)}
+
+[${formatDateTime(new Date())}] ${message}`, options)
+    }
+}
 function throwCommand(cmd: ICommand, arg: string, mean?: string, options?: ErrorOptions): never {
     const message = `unknown command: ${JSON.stringify(arg)} for ${JSON.stringify(cmd.use())}`
     if (mean) {
@@ -161,9 +178,9 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                 await flag.parse(arg)
                 flag = undefined
             } catch (e) {
-                throwFlag(cmd,
+                throwArgument(cmd,
                     `[${arg}] invalid argument ${JSON.stringify(arg)} for ${flagName} flag: ${e instanceof Error ? e.message : e}`,
-                    undefined,
+                    flagName, flag?.guess(arg, opts?.levenshteinDistance),
                     {
                         cause: e,
                     }
@@ -192,9 +209,9 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                         flag = undefined
                     }
                 } catch (e) {
-                    throwFlag(cmd,
+                    throwArgument(cmd,
                         `[${arg}] invalid argument ${JSON.stringify(v)} for ${flagName} flag: ${e instanceof Error ? e.message : e}`,
-                        undefined,
+                        flagName, flag?.guess(v, opts?.levenshteinDistance),
                         {
                             cause: e,
                         }
@@ -233,9 +250,9 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                         }
                         await flag.parse('1')
                     } catch (e) {
-                        throwFlag(cmd,
+                        throwArgument(cmd,
                             `[${arg}] invalid argument ${JSON.stringify(v)} for ${flagName} flag: ${e instanceof Error ? e.message : e}`,
-                            undefined,
+                            flagName, flag?.guess(v, opts?.levenshteinDistance),
                             {
                                 cause: e,
                             }

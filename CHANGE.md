@@ -1,10 +1,10 @@
-# 1.0.4
+# 1.0.5
 
 - Automatically suggests the correct flag or command when a typo occurs
 - I've fixed some spelling errors in English words. Sorry, English is not my
   native language. Thanks Gemini.
 
-# 1.0.3
+# 1.0.4
 
 - Add utility functions scanInput/formatOutput
 

@@ -50,6 +50,9 @@
   "bugs": {
     "url": "https://github.com/own-js-org/command/issues"
   },
+  "author": {
+    "name": "powerpuffpenguin"
+  },
   "homepage": "https://github.com/own-js-org/command#readme",
   "license": "MIT"
 }

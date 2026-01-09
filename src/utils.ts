@@ -14,7 +14,6 @@ export function scanInput(s: string): string[] {
 
     while (i < s.length) {
         const char = s[i]!
-
         if (escaped) {
             // Current character is escaped, add directly and reset escape state
             current += char

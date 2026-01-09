@@ -31,7 +31,8 @@ describe("scanInput() Comprehensive Tests", () => {
         // Escaped space: val\ ue -> val ue
         expect(scanInput("val\\ ue")).toEqual(["val ue"])
         // Escaped quotes: \" -> "
-        expect(scanInput('cmd --name=\"John Doe\"')).toEqual(['cmd', '--name="John Doe"'])
+        expect(scanInput('cmd --name=\"John Doe\"')).toEqual(['cmd', '--name=John Doe'])
+        expect(scanInput('cmd --name=\\"John Doe\\"')).toEqual(['cmd', '--name="John', 'Doe"'])
     })
 
     test("Mixed quoting and escaping", () => {

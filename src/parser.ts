@@ -4,17 +4,38 @@ import { formatDateTime } from "./strings";
 export class ParseCommandError extends Error {
 
 }
-function throwFlag(cmd: ICommand, message: string, options?: ErrorOptions): never {
-    throw new ParseCommandError(`${message}
+function throwFlag(cmd: ICommand, message: string, mean?: string | null, options?: ErrorOptions): never {
+    if (mean) {
+        throw new ParseCommandError(`${message}
+${cmd.toString(true)}
+
+[${formatDateTime(new Date())}] ${message}
+
+Did you mean this?
+  --${mean}
+`, options)
+    } else {
+        throw new ParseCommandError(`${message}
 ${cmd.toString(true)}
 
 [${formatDateTime(new Date())}] ${message}`, options)
+    }
 }
-function throwCommand(cmd: ICommand, arg: string, options?: ErrorOptions): never {
+function throwCommand(cmd: ICommand, arg: string, mean?: string, options?: ErrorOptions): never {
     const message = `unknown command: ${JSON.stringify(arg)} for ${JSON.stringify(cmd.use())}`
-    throw new ParseCommandError(`${message}
+    if (mean) {
+        throw new ParseCommandError(`${message}
+Run ${JSON.stringify(cmd.use() + ' --help')} for usage.
+[${formatDateTime(new Date())}] ${message}
+
+Did you mean this?
+  ${mean}
+`, options)
+    } else {
+        throw new ParseCommandError(`${message}
 Run ${JSON.stringify(cmd.use() + ' --help')} for usage.
 [${formatDateTime(new Date())}] ${message}`, options)
+    }
 }
 
 function getLogName(s: string): { name: string, value: string } {
@@ -30,6 +51,7 @@ function getLogName(s: string): { name: string, value: string } {
         value: s.substring(i),
     }
 }
+
 export enum RunMode {
     /**
      * Call each found command callback sequentially.
@@ -65,6 +87,12 @@ export interface ParseCommandOptions {
      * User-defined parameters passed to the callback
      */
     userdata?: any
+
+    /**
+     * The intelligent prompt distance parameter is disabled if it is less than 1.
+     * @default 2
+     */
+    levenshteinDistance?: number
 }
 /**
  * Used to manually invoke the found command.
@@ -135,6 +163,7 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
             } catch (e) {
                 throwFlag(cmd,
                     `[${arg}] invalid argument ${JSON.stringify(arg)} for ${flagName} flag: ${e instanceof Error ? e.message : e}`,
+                    undefined,
                     {
                         cause: e,
                     }
@@ -165,6 +194,7 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                 } catch (e) {
                     throwFlag(cmd,
                         `[${arg}] invalid argument ${JSON.stringify(v)} for ${flagName} flag: ${e instanceof Error ? e.message : e}`,
+                        undefined,
                         {
                             cause: e,
                         }
@@ -172,7 +202,8 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                 }
                 continue
             } else if (!allowUnknowFlag) {
-                throwFlag(cmd, `Unknow flag: ${JSON.stringify(name)} in ${arg}`)
+                const falg = cmd.flags.guess(name, opts?.levenshteinDistance)
+                throwFlag(cmd, `Unknow flag: ${JSON.stringify(name)} in ${arg}`, falg?.name)
             }
         } else if (arg.startsWith('-')) {
             let name = arg.substring(1, 2)
@@ -204,6 +235,7 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                     } catch (e) {
                         throwFlag(cmd,
                             `[${arg}] invalid argument ${JSON.stringify(v)} for ${flagName} flag: ${e instanceof Error ? e.message : e}`,
+                            undefined,
                             {
                                 cause: e,
                             }
@@ -242,7 +274,7 @@ export async function parseCommand(args: string[], cmd: ICommand, opts?: ParseCo
                 cmd = found
                 continue
             } else if (!allowUnknowCommand) {
-                throwCommand(cmd, arg)
+                throwCommand(cmd, arg, cmd.guess(arg, opts?.levenshteinDistance)?.name)
             }
         }
         strs.push(arg)

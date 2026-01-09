@@ -1,7 +1,7 @@
 import { CommandError } from "./errors";
 import { FlagBoolean } from "./flag";
 import { Flags, type CommandCallback, type ICommand } from "./flags";
-import { compareString, formatUsage } from "./strings";
+import { compareString, formatUsage, getLevenshteinDistance } from "./strings";
 
 /**
  * Command definition options
@@ -57,8 +57,21 @@ export class Command implements ICommand {
      */
     readonly children = new Map<string, Command>()
 
-    child(name: string): ICommand | undefined {
-        return this.children.get(name)
+    child(name: string): ICommand | null {
+        return this.children.get(name) ?? null
+    }
+    guess(name: string, levenshteinDistance?: number | null): ICommand | null {
+        let found = Number.isFinite(levenshteinDistance) ? levenshteinDistance! : 2
+        let v: ICommand | null = null
+        let i
+        for (const [key, val] of this.children) {
+            i = getLevenshteinDistance(name, key)
+            if (i <= found) {
+                found = i
+                v = val
+            }
+        }
+        return v
     }
     hasChildren(): boolean {
         return this.children.size ? true : false

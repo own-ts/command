@@ -8,7 +8,7 @@ import {
     FlagBoolean, FlagBooleans,
     FlagUint, FlagUints
 } from "./flag";
-import { compareString } from "./strings";
+import { compareString, getLevenshteinDistance } from "./strings";
 export type CommandCallback<T = any> = (args: string[], userdata: any, cmd: ICommand) => T | Promise<T>
 export interface ICommand {
     /**
@@ -49,11 +49,16 @@ export interface ICommand {
     /**
      * found child command
      */
-    child(name: string): ICommand | undefined
+    child(name: string): ICommand | null
     /**
      * Returns whether a subcommand exists.
      */
     hasChildren(): boolean
+
+    /**
+     * guess the subcommand the user wants to use
+     */
+    guess(name: string, levenshteinDistance?: number | null): ICommand | null
 
     toString(err?: boolean): string
 }
@@ -84,6 +89,22 @@ export class Flags implements Iterable<Flag<any>> {
      */
     find(name: string, short = false): Flag<any> | undefined {
         return short ? this.short_?.get(name) : this.long_?.get(name);
+    }
+    guess(name: string, levenshteinDistance?: number | null): Flag<any, any> | null {
+        if (!this.long_) {
+            return null
+        }
+        let found = Number.isFinite(levenshteinDistance) ? levenshteinDistance! : 2
+        let v: Flag<any, any> | null = null
+        let i
+        for (const [key, flag] of this.long_) {
+            i = getLevenshteinDistance(name, key)
+            if (i <= found) {
+                found = i
+                v = flag
+            }
+        }
+        return v
     }
     private _getArrs(): undefined | Array<Flag<any>> {
         const keys = this.long_

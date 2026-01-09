@@ -1,6 +1,6 @@
 {
   "name": "@own-js/command",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A lightweight, high-performance, and strictly typed command-line framework.",
   "files": [
     "dist"
